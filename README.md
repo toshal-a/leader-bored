@@ -57,7 +57,7 @@ By default, the dependencies are managed with [Poetry](https://python-poetry.org
 ``pyproject.toml`` file contains all the project dependencies present in the root directory of the project.
 
  One of the dependencies ``psycopg2`` requires additional packages: You can install it with:
-```console
+ ```console
  $ sudo apt install libpq-dev python3.7-dev
  ```
 
