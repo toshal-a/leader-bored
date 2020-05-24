@@ -1,4 +1,5 @@
 
+
 # LeaderBored
 
 ## Requirements
@@ -47,7 +48,7 @@ $ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-po
 >Note:- There might be a issue of poetry creating a virtual environment based on python 2.7 version.
 >There is a work around as stated below:-
 * Add an alias to your ``.bashrc`` or similar at the end of the file and save it, like this:
-```console
+```bash
 alias poetry="python3.7 $HOME/.poetry/bin/poetry"
 ```
 
