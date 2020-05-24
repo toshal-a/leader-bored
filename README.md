@@ -48,12 +48,17 @@ $ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-po
 >There is a work around as stated below:-
 * Add an alias to your ``.bashrc`` or similar at the end of the file and save it, like this:
 ```console
-alias poetry="python3.7 $HOME/.poetry/bin/poetry
+alias poetry="python3.7 $HOME/.poetry/bin/poetry"
 ```
 
 ## Backend local development, additional details
 By default, the dependencies are managed with [Poetry](https://python-poetry.org/), go there and install it.
 ``pyproject.toml`` file contains all the project dependencies present in the root directory of the project.
+
+ One of the dependencies ``psycopg2`` requires additional packages: You can install it with:
+```console
+ $ sudo apt install libpq-dev python3.7-dev
+ ```
 
  You can install all the dependencies with:
  ```console
