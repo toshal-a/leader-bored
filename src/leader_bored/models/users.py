@@ -1,5 +1,4 @@
 from . import db
-from sqlalchemy import Enum
 
 
 class User(db.Model):
@@ -10,7 +9,7 @@ class User(db.Model):
     email = db.Column(db.String(), unique=True, nullable=False)
     hashed_password = db.Column(db.String(), nullable=False)
     current_class = db.Column(
-        Enum('fe', 'se', 'te', 'be', 'other', name="ClassEnum"),
+        db.Enum('fe', 'se', 'te', 'be', 'other', name="ClassEnum"),
         nullable=False,
         default='be',
         server_default='be'
