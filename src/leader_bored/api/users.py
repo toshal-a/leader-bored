@@ -18,6 +18,7 @@ async def add_user(user: UserCreate):
         email=user.email,
         hashed_password=user.password,
         codeforces_handle=user.codeforces_handle,
+        current_class=user.current_class
     )
     return rv.to_dict()
 
