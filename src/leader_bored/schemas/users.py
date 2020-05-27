@@ -8,6 +8,8 @@ class UserBase(BaseModel):
     full_name: Optional[str] = None
     codeforces_handle: Optional[str] = None
     current_class: Optional[str] = 'other'
+    overall_score: Optional[int] = 0
+
 
 # Properties to receive via API on creation.
 class UserCreate(UserBase):
