@@ -1,10 +1,12 @@
+from secrets import token_urlsafe
 from sqlalchemy.engine.url import URL, make_url
 from starlette.config import Config
 from starlette.datastructures import Secret
 
 config = Config(".env")
 
-DB_DRIVER = config("DB_DRIVER", default="postgresql")
+ACCESS_TOKEN_EXPIRE_MINUTES = config("ACCESS_TOKEN_EXPIRE_MINUTES", cast=int, default=60 * 24 * 8)
+DB_DRIVER = config("DB_DRIVER", default="postgresql+psycopg2")
 DB_HOST = config("DB_HOST", default=None)
 DB_PORT = config("DB_PORT", cast=int, default=None)
 DB_USER = config("DB_USER", default=None)
@@ -31,3 +33,5 @@ DB_USE_CONNECTION_FOR_REQUEST = config(
 )
 DB_RETRY_LIMIT = config("DB_RETRY_LIMIT", cast=int, default=1)
 DB_RETRY_INTERVAL = config("DB_RETRY_INTERVAL", cast=int, default=1)
+PROJECT_NAME = config("PROJECT_NAME",default=None)
+SECRET_KEY = config("SECRET_KEY",default=token_urlsafe(32))
