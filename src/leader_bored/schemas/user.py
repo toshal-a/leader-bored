@@ -1,29 +1,38 @@
 from typing import Optional
-
+from enum import Enum
 from pydantic import BaseModel, EmailStr
 
-# Shared Properties.
+class ClassEnum(str,Enum):
+    FE = 'FE'
+    SE = 'SE'
+    TE = 'TE'
+    BE = 'BE'
+    OTHER = 'Other'
+# Shared properties
 class UserBase(BaseModel):
     email: Optional[EmailStr] = None
+    is_active: Optional[bool] = True
+    is_superuser: bool = False
     full_name: Optional[str] = None
-    codeforces_handle: Optional[str] = None
-    current_class: Optional[str] = 'other'
+    handle : Optional[str] = None
+    class_type: ClassEnum = ClassEnum.OTHER
+
 
 # Properties to receive via API on creation.
 class UserCreate(UserBase):
     email: EmailStr
     password: str
-    codeforces_handle: str
-    current_class: str
-
+    handle: str
 
 # Properties to receive via API on update
 class UserUpdate(UserBase):
     password: Optional[str] = None
+    overall_score : Optional[int] = 0
 
 
 class UserInDBBase(UserBase):
     id: Optional[int] = None
+    overall_score : Optional[int] = 0
 
     class Config:
         orm_mode = True

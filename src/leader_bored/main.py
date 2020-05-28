@@ -3,8 +3,6 @@ import logging
 import click
 from fastapi import FastAPI
 
-from .models import db
-
 try:
     from importlib.metadata import entry_points
 except ImportError:  # pragma: no cover
@@ -14,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 def get_app():
     app = FastAPI(title="LeaderBored API")
-    db.init_app(app)
     load_modules(app)
     return app
 
