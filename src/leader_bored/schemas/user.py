@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from enum import Enum
 from pydantic import BaseModel, EmailStr
 
@@ -25,10 +25,13 @@ class UserCreate(UserBase):
     handle: str
 
 # Properties to receive via API on update
-class UserUpdate(UserBase):
+class UserUpdate(BaseModel):
     password: Optional[str] = None
-    overall_score : Optional[int] = 0
+    score : Optional[int] = 0
 
+# Properties to return via API
+class UserHandle(BaseModel):
+    handle : List[str]
 
 class UserInDBBase(UserBase):
     id: Optional[int] = None

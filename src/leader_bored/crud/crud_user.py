@@ -36,12 +36,13 @@ class CRUDUser(CRUDBase[Users, UserCreate, UserUpdate]):
             update_data = obj_in
         else:
             update_data = obj_in.dict(exclude_unset=True)
-        if update_data["password"]:
+        if "password" in update_data:
             hashed_password = get_password_hash(update_data["password"])
             del update_data["password"]
             update_data["hashed_password"] = hashed_password
-        if update_data["overall_score"]:
-            update_data["overall_score"] += getattr(db_obj,"overall_score")
+        if "score" in update_data:
+            update_data["overall_score"] = update_data["score"] + getattr(db_obj,"overall_score")
+            del update_data["score"]
         return super().update(db, db_obj=db_obj, obj_in=update_data)
 
     def authenticate(self, db: Session, *, email: str, password: str) -> Optional[Users]:

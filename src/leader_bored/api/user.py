@@ -23,7 +23,7 @@ async def read_users(
     users = crud.user.get_multi(db, skip=skip, limit=limit)
     return users
 
-@router.get("/handle", dependencies=[Depends(depends.verify_token)])
+@router.get("/handle", dependencies=[Depends(depends.verify_token)], response_model=schemas.UserHandle)
 async def read_user_handles(
     db: Session = Depends(depends.get_db),
     skip: int = 0,
@@ -34,7 +34,7 @@ async def read_user_handles(
     """
     handles = crud.user.get_multi_handle(db)
 
-    return [getattr(handle,'handle') for handle in handles]
+    return dict(handle=[getattr(handle,'handle') for handle in handles])
 
 @router.post("/", response_model=schemas.User)
 async def create_user(
