@@ -2,7 +2,7 @@ from sqlalchemy import Boolean, Column, Enum, Integer, String, DateTime
 from sqlalchemy.sql import func
 from leader_bored.db.base_class import Base
 
-class User(Base):
+class Users(Base):
     id = Column(Integer, primary_key=True)
     full_name = Column(String,nullable=False)
     email = Column(String, unique=True,nullable=False)
