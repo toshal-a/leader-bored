@@ -23,6 +23,7 @@ requests = "^2.23.0"
 autopep8 = "^1.5.2"
 
 [tool.poetry.plugins."leader_bored.modules"]
+"contests"="leader_bored.api.contests"
 "user" = "leader_bored.api.user"
 "token" = "leader_bored.api.token"
 
