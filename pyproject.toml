@@ -16,6 +16,7 @@ python-multipart = "^0.0.5"
 passlib = {extras = ["bcrypt"], version = "^1.7.2"}
 pydantic = {extras = ["email"], version = "^1.5.1"}
 pyjwt = "^1.7.1"
+httpx = "^0.13.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.4.2"

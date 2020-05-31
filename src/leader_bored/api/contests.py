@@ -1,72 +1,21 @@
 from fastapi import APIRouter, Body, Depends, HTTPException
-import httpx
 from sqlalchemy.orm import Session
-from typing import List
 
+from leader_bored.utils import contest_utils
 from leader_bored.core import depends
 from leader_bored import crud, models, schemas
 
 router = APIRouter()
 
-
-async def make_handle_string(handles: List[str]):
-    stringHandle = ""
-    for handle in handles:
-        stringHandle += handle[0]
-        stringHandle += ';'
-    return stringHandle
-
-
-async def get_cf_response(params: dict):
-    async with httpx.AsyncClient() as client:
-        response = await client.get('https://codeforces.com/api/contest.standings', params=params)
-    #response = {}
-    return response.json()
-
-
-async def calculate_cf_score(response: dict):
-    new_scores = {}
-    response = response['rows']
-    for entry in response:
-        userHandle = entry['party']['members'][0]['handle']
-        new_scores[userHandle] = entry['points']
-
-    return new_scores
-
-
-async def calculate_icpc_score(response: dict):
-    new_scores = {}
-    ratings = []
-    for problem in response['problems']:
-        ratings.append(problem['rating'] - 250)
-    response = response['rows']
-    for entry in response:
-        userHandle = entry['party']['members'][0]['handle']
-        penalty = entry['penalty']
-        score = 0
-        cnt = 0
-        for problem in entry['problemResults']:
-            if problem["points"] == 1:
-                score += ratings[cnt]
-            cnt += 1
-        score -= penalty
-        score += (entry['successfulHackCount'] -
-                  entry['unsuccessfulHackCount']) * 10
-
-        new_scores[userHandle] = score
-
-    return new_scores
-
-
 @router.get("/{contest_id}", dependencies=[Depends(depends.verify_token)])
-async def add_contest_score(contest_id: int, db: Session = Depends(depends.get_db)):
+async def add_contest_score(contest_id: int, revert: bool = 0, db: Session = Depends(depends.get_db)):
     handles = crud.user.get_multi_handle(db)
     params = {
         'contestId': contest_id,
         'showUnofficial': 'false',
-        'handles': await make_handle_string(handles)
+        'handles': await contest_utils.make_handle_string(handles)
     }
-    response = await get_cf_response(params)
+    response = await contest_utils.get_cf_response(params)
 
     if response['status'] != 'OK':
         raise HTTPException(
@@ -88,9 +37,9 @@ async def add_contest_score(contest_id: int, db: Session = Depends(depends.get_d
         )
 
     if response['contest']['type'] == 'CF' or response['contest']['type'] == 'IOI':
-        contestScores = await calculate_cf_score(response)
+        contestScores = await contest_utils.calculate_cf_score(response)
     elif response['contest']['type'] == 'ICPC':
-        contestScores = await calculate_icpc_score(response)
+        contestScores = await contest_utils.calculate_icpc_score(response)
     else:
         raise HTTPException(
             status_code=404,
