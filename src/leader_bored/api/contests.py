@@ -10,6 +10,10 @@ router = APIRouter()
 @router.get("/{contest_id}", dependencies=[Depends(depends.verify_token)])
 async def add_contest_score(contest_id: int, revert: bool = 0, db: Session = Depends(depends.get_db)):
     handles = crud.user.get_multi_handle(db)
+    exception_obj = HTTPException(
+        status_code = status.HTTP_400_BAD_REQUEST,
+        detail=''
+    )
     params = {
         'contestId': contest_id,
         'showUnofficial': 'false',
@@ -18,23 +22,29 @@ async def add_contest_score(contest_id: int, revert: bool = 0, db: Session = Dep
     response = await contest_utils.get_cf_response(params)
 
     if response.get( 'status', "") != 'OK':
-        raise HTTPException(
-            status_code=status.HTTP_424_FAILED_DEPENDENCY,
-            detail={
+        setattr(exception_obj, 'status_code', status.HTTP_424_FAILED_DEPENDENCY)
+        setattr(
+            exception_obj,
+            'detail',
+            {
                 "message": "There is an error fetching data from cf please try again after some time.",
                 "api_response": response
             }
         )
+        raise exception_obj
 
     response = response.get('result', {})
     if response.get('contest', {}).get('phase', "") != 'FINISHED':
-        raise HTTPException(
-            status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
-            detail={
+        setattr(exception_obj, 'status_code', status.HTTP_405_METHOD_NOT_ALLOWED)
+        setattr(
+            exception_obj, 
+            'detail',
+            {
                 "message": "The contest is not yet over. Please try again after some time",
                 "contest_phase": response.get('contest', {}).get('phase', "")
             }
         )
+        raise exception_obj
 
     contestType = response.get('contest', {}).get('type', "")
     if contestType == 'CF' or contestType == 'IOI':
@@ -42,21 +52,27 @@ async def add_contest_score(contest_id: int, revert: bool = 0, db: Session = Dep
     elif contestType == 'ICPC':
         contestScores = await contest_utils.calculate_icpc_score(response)
     else:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
+        setattr(exception_obj, 'status_code', status.HTTP_400_BAD_REQUEST)
+        setattr(
+            exception_obj,
+            'detail',
+            {
                 "message": "This is a diffrent type of contest",
                 "contest_type": contestType
-            }
+            } 
         )
+        raise exception_obj
 
     for handle in contestScores:
         user = crud.user.get_by_handle(db, handle=handle)
         if not user:
-            raise HTTPException(
-                status_code = status.HTTP_409_CONFLICT,
-                detail="A user with given handle does not exist in data base.",
+            setattr(exception_obj, 'status_code', status.HTTP_409_CONFLICT)
+            setattr(
+                exception_obj,
+                'detail',
+                "A user with given handle does not exist in data base."
             )
+            raise exception_obj
         user_in = {'score': contestScores.get(handle, 0)}
         user = crud.user.update(db, db_obj=user, obj_in=user_in)
 
