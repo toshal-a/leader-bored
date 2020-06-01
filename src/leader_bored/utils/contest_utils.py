@@ -2,13 +2,10 @@ import httpx
 from typing import List
 
 
-async def make_handle_string(handles: List[str]):
-    stringHandle = ""
-    for handle in handles:
-        stringHandle += handle[0]
-        stringHandle += ';'
-    return stringHandle
-
+async def make_handle_string(handles: List[str])->str:
+    separator = ';'
+    handles = [x[0] for x in handles]
+    return separator.join(handles)
 
 async def get_cf_response(params: dict):
     async with httpx.AsyncClient() as client:
