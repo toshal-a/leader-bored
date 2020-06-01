@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from leader_bored.utils import contest_utils
@@ -17,35 +17,36 @@ async def add_contest_score(contest_id: int, revert: bool = 0, db: Session = Dep
     }
     response = await contest_utils.get_cf_response(params)
 
-    if response['status'] != 'OK':
+    if response.get( 'status', "") != 'OK':
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_424_FAILED_DEPENDENCY,
             detail={
                 "message": "There is an error fetching data from cf please try again after some time.",
                 "api_response": response
             }
         )
 
-    response = response['result']
-    if response['contest']['phase'] != 'FINISHED':
+    response = response.get('result', {})
+    if response.get('contest', {}).get('phase', "") != 'FINISHED':
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
             detail={
                 "message": "The contest is not yet over. Please try again after some time",
-                "contest_phase": response['contest']['phase']
+                "contest_phase": response.get('contest', {}).get('phase', "")
             }
         )
 
-    if response['contest']['type'] == 'CF' or response['contest']['type'] == 'IOI':
+    contestType = response.get('contest', {}).get('type', "")
+    if contestType == 'CF' or contestType == 'IOI':
         contestScores = await contest_utils.calculate_cf_score(response)
-    elif response['contest']['type'] == 'ICPC':
+    elif contestType == 'ICPC':
         contestScores = await contest_utils.calculate_icpc_score(response)
     else:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail={
                 "message": "This is a diffrent type of contest",
-                "contest_type": response['contest']['type']
+                "contest_type": contestType
             }
         )
 
@@ -53,10 +54,10 @@ async def add_contest_score(contest_id: int, revert: bool = 0, db: Session = Dep
         user = crud.user.get_by_handle(db, handle=handle)
         if not user:
             raise HTTPException(
-                status_code=404,
+                status_code = status.HTTP_409_CONFLICT,
                 detail="A user with given handle does not exist in data base.",
             )
-        user_in = {'score': contestScores[handle]}
+        user_in = {'score': contestScores.get(handle, 0)}
         user = crud.user.update(db, db_obj=user, obj_in=user_in)
 
     return contestScores
