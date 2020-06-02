@@ -11,6 +11,9 @@ from leader_bored.schemas.user import UserCreate, UserUpdate
 class CRUDUser(CRUDBase[Users, UserCreate, UserUpdate]):
     def get_by_email(self, db: Session, *, email: str) -> Optional[Users]:
         return db.query(Users).filter(Users.email == email).first()
+
+    def get_by_handle(self, db: Session, *, handle:str)-> Optional[Users]:
+        return db.query(Users).filter(Users.handle == handle).first() 
     
     def get_multi_handle(self, db: Session) -> Optional[Users]:
         return db.query(Users.handle).all()
