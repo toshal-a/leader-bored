@@ -3,7 +3,6 @@ from typing import List
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime
-from fastapi.encoders import jsonable_encoder
 
 from leader_bored.utils import contest_utils
 from leader_bored.core import depends
