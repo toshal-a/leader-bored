@@ -100,12 +100,8 @@ async def add_contest_score(contest_id: int, revert: bool = 0, db: Session = Dep
         user_in = {'score': contestScores.get(handle, 0)}
         if revert == 1:
             user_in['score'] *= (-1)
-            if checkContest != None and user.created_at > checkContest.added_at:
-                continue
-        elif checkContest != None and revert == 0 and checkContest.reverted_at != None and user.created_at > checkContest.reverted_at:
-            continue
-
-        crud.user.update(db, db_obj=user, obj_in=user_in)
+            
+        await contest_utils.update_user_score(user, checkContest, db, revert, user_in)
  
     await contest_utils.modify_contest_db(checkContest, db,  contestId, contestName, contestType, 
             contestDurationSeconds, contestStartTime, revert)
