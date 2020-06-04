@@ -1,4 +1,5 @@
 import copy
+from typing import List
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime
@@ -10,7 +11,7 @@ from leader_bored import crud, models, schemas
 
 router = APIRouter()
 
-@router.get("/{contest_id}", dependencies=[Depends(depends.verify_token)])
+@router.get("/add/{contest_id}", dependencies=[Depends(depends.verify_token)])
 async def add_contest_score(contest_id: int, revert: bool = 0, db: Session = Depends(depends.get_db)):
     exception_obj = HTTPException(
         status_code = status.HTTP_400_BAD_REQUEST,
@@ -149,6 +150,35 @@ async def add_contest_score(contest_id: int, revert: bool = 0, db: Session = Dep
 
     return contestScores
 
+@router.get("/{contest_id}", dependencies=[Depends(depends.verify_token)], response_model= schemas.Contest)
+async def get_contest_info(contest_id: int, db: Session = Depends(depends.get_db)):
+    """
+    Get a specific contest by id.
+    """
+    contest = crud.contest.get(db, id = contest_id)
+    return contest
+
+@router.get("/", dependencies=[Depends(depends.verify_token)], response_model = List[schemas.Contest])
+async def get_all_contests(skip: int=0, limit: int=100, db: Session = Depends(depends.get_db)):
+    """
+    Get information about all saved contests in database.
+    """
+    contests = crud.contest.get_multi(db, skip = skip, limit = limit)
+    return contests
+
+@router.delete("/{contest_id}",dependencies=[Depends(depends.verify_token)], response_model=schemas.Contest)
+async def delete_contest(contest_id: int, db: Session = Depends(depends.get_db)) :
+    """
+    Delete a contest.
+    """
+    contest = crud.contest.get(db, id=contest_id)
+    if not contest:
+        raise HTTPException(
+            status_code=404,
+            detail="The given contest is not added in to the database",
+        )
+    contest = crud.contest.remove(db, id=contest_id)
+    return contest
 
 def init_app(app):
     app.include_router(router, prefix="/contests")
