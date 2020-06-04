@@ -22,21 +22,9 @@ async def add_contest_score(contest_id: int, revert: bool = 0, db: Session = Dep
     if checkContest != None:
         checkContest = copy.deepcopy(checkContest)
     
-    if checkContest == None and revert == True:
-        setattr(exception_obj, 'status_code', status.HTTP_405_METHOD_NOT_ALLOWED)
-        setattr(
-            exception_obj, 
-            'detail',
-            {
-                "message": "The contest is not yet added. Please add the contest before reverting",
-            }
-        )
-        raise exception_obj
-
-    if revert == True and crud.contest.is_added(checkContest) == False:
-        return {'message': "Contest is already reverted successfully not reverting once again"}
-    if revert == False and checkContest != None and crud.contest.is_added(checkContest) == True:
-        return {'message': "Contest is already added successfully not adding once again"}
+    validation_msg = await contest_utils.validate_contest_addition(checkContest, revert, exception_obj)
+    if validation_msg.get('message', '') != 'Correct':
+        return validation_msg
 
     handles = crud.user.get_multi_handle(db)
     
@@ -119,34 +107,8 @@ async def add_contest_score(contest_id: int, revert: bool = 0, db: Session = Dep
 
         crud.user.update(db, db_obj=user, obj_in=user_in)
  
-    if checkContest == None:
-        crud.contest.create(
-            db, 
-            obj_in= dict({
-                'id': contestId,
-                'contest_name' : contestName,
-                'contest_type' : contestType,
-                'duration_seconds': contestDurationSeconds,
-                'starting_at' : contestStartTime
-            })
-        )
-    else:
-        if revert == True:
-            crud.contest.update(
-                db, db_obj=checkContest,
-                obj_in  = dict({
-                    'is_added':False,
-                    'reverted_at' : datetime.utcnow(), 
-                })
-            )
-        else:
-            crud.contest.update(
-                db, db_obj = checkContest,
-                obj_in = dict({
-                    'is_added': True,
-                    'added_at': datetime.utcnow()
-                })
-            )
+    await contest_utils.modify_contest_db(checkContest, db,  contestId, contestName, contestType, 
+            contestDurationSeconds, contestStartTime, revert)
 
     return contestScores
 
