@@ -95,7 +95,8 @@ async def modify_contest_db(
     contestType: str, 
     contestDurationSeconds: int,
     contestStartTime: Optional[datetime],
-    revert: bool):
+    revert: bool
+):
     if checkContest == None:
         crud.contest.create(
             db, 
