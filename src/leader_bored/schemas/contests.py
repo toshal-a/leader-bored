@@ -4,7 +4,7 @@ from pydantic import BaseModel, EmailStr
 from datetime import datetime
 
 
-class ContestEnum(str,Enum):
+class ContestEnum(str, Enum):
     CF = 'CF'
     IOI = 'IOI'
     ICPC = 'ICPC'
