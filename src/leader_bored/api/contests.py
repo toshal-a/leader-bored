@@ -1,6 +1,6 @@
 import copy
 from typing import List
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from datetime import datetime
 
@@ -11,29 +11,39 @@ from leader_bored import crud, models, schemas
 router = APIRouter()
 
 @router.get("/add/{contest_id}", dependencies=[Depends(depends.verify_token)])
-async def add_contest_score(contest_id: int, revert: bool = 0, db: Session = Depends(depends.get_db)):
+async def add_contest_score(
+    contest_id: int, 
+    background_tasks: BackgroundTasks,
+    revert: bool = 0, 
+    db: Session = Depends(depends.get_db),
+):
     exception_obj = HTTPException(
         status_code = status.HTTP_400_BAD_REQUEST,
         detail=''
     )
 
+    # Deepcopy to prevent cleaning of db object after commit.
     checkContest = crud.contest.get(db, id = contest_id)
     if checkContest != None:
         checkContest = copy.deepcopy(checkContest)
     
+    # Validate that we are not doing the same task again and again.
     validation_msg = await contest_utils.validate_contest_addition(checkContest, revert, exception_obj)
     if validation_msg.get('message', '') != 'Correct':
         return validation_msg
 
-    handles = crud.user.get_multi_handle(db)
+    # Get Handles whose scores should be updated.
+    handles = await contest_utils.get_update_handles(db, revert, checkContest)
     
     params = {
         'contestId': contest_id,
         'showUnofficial': 'false',
         'handles': await contest_utils.make_handle_string(handles)
     }
+    # Retrieve the information from cf api.
     response = await contest_utils.get_cf_response(params)
 
+    # If the api call fails return response.
     if response.get( 'status', "") != 'OK':
         setattr(exception_obj, 'status_code', status.HTTP_424_FAILED_DEPENDENCY)
         setattr(
@@ -47,6 +57,7 @@ async def add_contest_score(contest_id: int, revert: bool = 0, db: Session = Dep
         raise exception_obj
 
     response = response.get('result', {})
+    # If the contest is not yet finished don't update the score.
     if response.get('contest', {}).get('phase', "") != 'FINISHED':
         setattr(exception_obj, 'status_code', status.HTTP_405_METHOD_NOT_ALLOWED)
         setattr(
@@ -59,6 +70,7 @@ async def add_contest_score(contest_id: int, revert: bool = 0, db: Session = Dep
         )
         raise exception_obj
 
+    # Information to be saved in contest table.
     contestType = response.get('contest', {}).get('type', "")
     contestName = response.get('contest', {}).get('name', "")
     contestId = response.get('contest', {}).get('id', 0)
@@ -67,10 +79,11 @@ async def add_contest_score(contest_id: int, revert: bool = 0, db: Session = Dep
     if contestStartTime  != None:
         contestStartTime = datetime.utcfromtimestamp(contestStartTime).strftime('%Y-%m-%d %H:%M:%S') 
     
+    # Calculate score to be add for every individual according to contest type.
     if contestType == 'CF' or contestType == 'IOI':
-        contestScores = await contest_utils.calculate_cf_score(response)
+        contestScores = await contest_utils.calculate_cf_score(response, revert)
     elif contestType == 'ICPC':
-        contestScores = await contest_utils.calculate_icpc_score(response)
+        contestScores = await contest_utils.calculate_icpc_score(response, revert)
     else:
         setattr(exception_obj, 'status_code', status.HTTP_400_BAD_REQUEST)
         setattr(
@@ -83,27 +96,9 @@ async def add_contest_score(contest_id: int, revert: bool = 0, db: Session = Dep
         )
         raise exception_obj
 
-    for handle in contestScores:
-        user = crud.user.get_by_handle(db, handle=handle)
-        if not user:
-            setattr(exception_obj, 'status_code', status.HTTP_409_CONFLICT)
-            setattr(
-                exception_obj,
-                'detail',
-                {
-                    'message': "A user with given handle %s does not exist in data base." % (handle),
-                    'reverted' : revert 
-                }
-            )
-            raise exception_obj
-        user_in = {'score': contestScores.get(handle, 0)}
-        if revert == 1:
-            user_in['score'] *= (-1)
-            
-        await contest_utils.update_user_score(user, checkContest, db, revert, user_in)
- 
-    await contest_utils.modify_contest_db(checkContest, db,  contestId, contestName, contestType, 
-            contestDurationSeconds, contestStartTime, revert)
+    # Background task which will update the database in the backend after sending the response.
+    background_tasks.add_task(contest_utils.update_databases, db, contestScores, checkContest, contestId,
+            contestName, contestType, contestDurationSeconds, contestStartTime, revert)
 
     return contestScores
 
