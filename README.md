@@ -61,7 +61,7 @@ alias poetry="python3.7 $HOME/.poetry/bin/poetry"
 $ source .bashrc
 ```
 
-## Backend local development, additional details
+## Backend local development and deployment, additional details
 By default, the dependencies are managed with [Poetry](https://python-poetry.org/), go there and install it.
 ``pyproject.toml`` file contains all the project dependencies present in the root directory of the project.
 
