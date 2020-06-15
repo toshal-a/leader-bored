@@ -7,6 +7,11 @@
 * Python 3.7
 * [Poetry](https://python-poetry.org/) for Python package and environment management.
 
+### MOST IMPORTANT STEPS TO DO
+```console
+$ sudo apt-get install build-essential
+```
+
 ### Python3.7 Installation
 Installing Python 3.7 on Ubuntu with apt is a relatively straightforward process and will only take a few minutes:
 1. Start by updating the packages list and installing the prerequisites:
@@ -51,8 +56,12 @@ $ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-po
 ```bash
 alias poetry="python3.7 $HOME/.poetry/bin/poetry"
 ```
+>To apply the above changes to current shell:-
+```console
+$ source .bashrc
+```
 
-## Backend local development, additional details
+## Backend local development and deployment, additional details
 By default, the dependencies are managed with [Poetry](https://python-poetry.org/), go there and install it.
 ``pyproject.toml`` file contains all the project dependencies present in the root directory of the project.
 
