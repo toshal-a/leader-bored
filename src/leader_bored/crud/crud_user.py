@@ -26,6 +26,7 @@ class CRUDUser(CRUDBase[Users, UserCreate, UserUpdate]):
             is_superuser=obj_in.is_superuser,
             handle=obj_in.handle,
             class_type=obj_in.class_type,
+            is_active=obj_in.is_active
         )
         db.add(db_obj)
         db.commit()
