@@ -11,7 +11,7 @@ class ClassEnum(str,Enum):
 # Shared properties
 class UserBase(BaseModel):
     email: Optional[EmailStr] = None
-    is_active: Optional[bool] = True
+    is_active: Optional[bool] = False
     is_superuser: bool = False
     full_name: Optional[str] = None
     handle : Optional[str] = None
