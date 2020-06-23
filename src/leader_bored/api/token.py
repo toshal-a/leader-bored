@@ -31,4 +31,4 @@ def login_access_token(
 
 
 def init_app(app):
-    app.include_router(router)
+    app.include_router(router,prefix="/api")

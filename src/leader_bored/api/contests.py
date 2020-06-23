@@ -133,4 +133,4 @@ async def delete_contest(contest_id: int, db: Session = Depends(depends.get_db))
     return contest
 
 def init_app(app):
-    app.include_router(router, prefix="/contests")
+    app.include_router(router, prefix="/api/contests")

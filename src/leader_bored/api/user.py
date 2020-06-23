@@ -104,4 +104,4 @@ async def delete_user(
     return user
 
 def init_app(app):
-    app.include_router(router,prefix="/user")
+    app.include_router(router,prefix="/api/user")
