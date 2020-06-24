@@ -11,7 +11,7 @@ except ImportError:  # pragma: no cover
 logger = logging.getLogger(__name__)
 
 def get_app():
-    app = FastAPI(title="LeaderBored API",openapi_url="/api/openapi.json",docs_url="/api/docs", redoc_url=None)
+    app = FastAPI(title="LeaderBored API",root_path="/api")
     load_modules(app)
     return app
 
