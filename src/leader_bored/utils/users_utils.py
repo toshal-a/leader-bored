@@ -32,6 +32,11 @@ def create_confirmation_url(hash:str):
     return link + hash
 
 
+def create_reset_password_url(hash:str):
+    link = "https://cp-leaderboard.me/user/reset_password/"
+    return link + hash
+
+
 def render_template(template, **kwargs):
     ''' renders a Jinja template into HTML '''
     # check if template exists.
@@ -88,13 +93,32 @@ def send_new_account_email(email_to: str, username: str):
 
     html = render_template( settings.TEMPLATE_DIR + 'call_to_action.html', 
             header="Activate Account",
-            text="You are almost there. To finish activating your account please click the link below.\n This link will expire in 10 minutes.",
+            text="You are almost there. To finish activating your account please click the link below. <br> This link will expire in 10 minutes.",
             c2a_link=confirmation_link,
             c2a_button="Activate Account")
     
     to_list = [email_to]
     sender = settings.MAIL_SENDER_EMAIL 
     subject = f"{settings.PROJECT_NAME} - New account for user {username}"
+    password = settings.MAIL_SENDER_PASSWORD
+    
+    # send email to a list of email addresses.
+    send_email(to_list, sender, password, None, None, subject, html)
+
+
+def send_reset_password_email(email_to: str, username: str):
+    reset_id=generate_confirmation_token(email_to)
+    reset_link=create_reset_password_url(reset_id)
+
+    html = render_template( settings.TEMPLATE_DIR + 'call_to_action.html', 
+            	header= "Password Reset",
+                text="You requested a password reset. Please use the button below to continue the process. <br> The link will expire in 10 minutes",
+                c2a_link=reset_link,
+                c2a_button="Reset Password")
+    
+    to_list = [email_to]
+    sender = settings.MAIL_SENDER_EMAIL 
+    subject = f"{settings.PROJECT_NAME} - Password reset request for user {username}"
     password = settings.MAIL_SENDER_PASSWORD
     
     # send email to a list of email addresses.

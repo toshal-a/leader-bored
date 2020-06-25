@@ -30,6 +30,9 @@ class UserUpdate(BaseModel):
     password: Optional[str] = None
     score : Optional[int] = 0
 
+class UserEmail(BaseModel):
+    email: EmailStr
+
 # Properties to return via API
 class UserHandle(BaseModel):
     handle : List[str]
