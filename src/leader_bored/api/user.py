@@ -53,7 +53,7 @@ async def create_user(
             detail="The user with this username already exists in the system.",
         )
     user = crud.user.create(db, obj_in=user_in)
-    users_utils.send_new_account_email(user_in.email, user_in.username)
+    users_utils.send_new_account_email(user_in.email, user_in.handle)
 
     return user
 

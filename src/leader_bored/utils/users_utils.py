@@ -28,7 +28,7 @@ def confirm_token(token, expiration=3600):
     return email
 
 def create_confirmation_url(hash:str):
-    link = "http://127.0.0.1:8000/confirm_email/"
+    link = "https://cp-leaderboard.me/user/confirm_email/"
     return link + hash
 
 
@@ -37,9 +37,10 @@ def render_template(template, **kwargs):
     # check if template exists.
     if not os.path.exists(template):
         print('No template file present: %s' % template)
+        print(os.getcwd())
         sys.exit()
 
-    templateLoader = jinja2.FileSystemLoader(searchpath="../templates")
+    templateLoader = jinja2.FileSystemLoader(searchpath="./")
     templateEnv = jinja2.Environment(loader=templateLoader)
     templ = templateEnv.get_template(template)
     return templ.render(**kwargs)
@@ -85,7 +86,7 @@ def send_new_account_email(email_to: str, username: str):
     confirmation_id=generate_confirmation_token(email_to)
     confirmation_link=create_confirmation_url(confirmation_id)
 
-    html = render_template('call_to_action.html', 
+    html = render_template( settings.TEMPLATE_DIR + 'call_to_action.html', 
             header="Activate Account",
             text="You are almost there. To finish activating your account please click the link below.\n This link will expire in 10 minutes.",
             c2a_link=confirmation_link,
