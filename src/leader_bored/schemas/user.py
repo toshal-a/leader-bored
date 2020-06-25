@@ -24,8 +24,9 @@ class UserCreate(UserBase):
     password: str
     handle: str
 
-# Properties to receive via API on update
+# Properties to receive via API on update.
 class UserUpdate(BaseModel):
+    is_active: Optional[bool]=None
     password: Optional[str] = None
     score : Optional[int] = 0
 
