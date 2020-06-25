@@ -1,12 +1,13 @@
 from typing import Any, List, Optional
 
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, BackgroundTasks
 from fastapi.encoders import jsonable_encoder
 from pydantic.networks import EmailStr
 from sqlalchemy.orm import Session
 
 from leader_bored import crud, models, schemas
 from leader_bored.core import depends, settings
+from leader_bored.utils import users_utils
 
 router = APIRouter()
 
@@ -40,7 +41,8 @@ async def read_user_handles(
 async def create_user(
     *,
     db: Session = Depends(depends.get_db),
-    user_in: schemas.UserCreate
+    user_in: schemas.UserCreate,
+    background_tasks: BackgroundTasks
 ) -> Any:
     """
     Create new user.
@@ -52,6 +54,9 @@ async def create_user(
             detail="The user with this username already exists in the system.",
         )
     user = crud.user.create(db, obj_in=user_in)
+
+    background_tasks.add_task(users_utils.send_new_account_email, user_in.email, user_in.handle)
+
     return user
 
 @router.get("/{user_id}",dependencies=[Depends(depends.verify_token)], response_model=schemas.User)
@@ -101,6 +106,28 @@ async def delete_user(
             detail="The user with this username does not exist in the system",
         )
     user = crud.user.remove(db,id=user_id)
+    return user
+
+@router.get("/confirm_email/{confirmation_id}")
+async def confirm_email_by_link(
+    confirmation_id: str,
+    db: Session = Depends(depends.get_db),
+) -> Any:
+    """
+    Confirm the mail is correct or not and activate the account.
+    """
+    confirmation_email=users_utils.confirm_token(confirmation_id)
+    user = crud.user.get_by_email(db, email=confirmation_email)
+    if not user:
+        raise HTTPException(
+            status_code=400,
+            detail="The user with this email doesn't exists in the system.",
+        )
+    
+    user_in = {
+        "is_active": True
+    }
+    user = crud.user.update(db, db_obj=user, obj_in=user_in)
     return user
 
 def init_app(app):
