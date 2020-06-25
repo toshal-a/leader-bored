@@ -1,6 +1,6 @@
 from typing import Any, List, Optional
 
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, BackgroundTasks
 from fastapi.encoders import jsonable_encoder
 from pydantic.networks import EmailStr
 from sqlalchemy.orm import Session
@@ -41,7 +41,8 @@ async def read_user_handles(
 async def create_user(
     *,
     db: Session = Depends(depends.get_db),
-    user_in: schemas.UserCreate
+    user_in: schemas.UserCreate,
+    background_tasks: BackgroundTasks
 ) -> Any:
     """
     Create new user.
@@ -53,7 +54,8 @@ async def create_user(
             detail="The user with this username already exists in the system.",
         )
     user = crud.user.create(db, obj_in=user_in)
-    users_utils.send_new_account_email(user_in.email, user_in.handle)
+
+    background_tasks.add_task(users_utils.send_new_account_email, user_in.email, user_in.handle)
 
     return user
 
