@@ -1,5 +1,4 @@
 import logging
-
 import click
 from fastapi import FastAPI
 

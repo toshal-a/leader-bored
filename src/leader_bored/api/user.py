@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 
 from leader_bored import crud, models, schemas
 from leader_bored.core import depends, settings
-from leader_bored.utils import users_utils
 
 router = APIRouter()
 
@@ -24,6 +23,7 @@ async def read_users(
     users = crud.user.get_multi(db, skip=skip, limit=limit)
     return users
 
+
 @router.get("/handle", dependencies=[Depends(depends.verify_token)], response_model=schemas.UserHandle)
 async def read_user_handles(
     db: Session = Depends(depends.get_db),
@@ -34,8 +34,8 @@ async def read_user_handles(
     Retrieve user handles.
     """
     handles = crud.user.get_multi_handle(db)
+    return dict(handle=[getattr(handle, 'handle') for handle in handles])
 
-    return dict(handle=[getattr(handle,'handle') for handle in handles])
 
 @router.post("/", response_model=schemas.User)
 async def create_user(
@@ -54,12 +54,42 @@ async def create_user(
             detail="The user with this username already exists in the system.",
         )
     user = crud.user.create(db, obj_in=user_in)
-
-    background_tasks.add_task(users_utils.send_new_account_email, user_in.email, user_in.handle)
-
+    background_tasks.add_task(
+        users_utils.send_new_account_email, user_in.email, user_in.handle)
     return user
 
-@router.get("/{user_id}",dependencies=[Depends(depends.verify_token)], response_model=schemas.User)
+@router.put("/me", response_model=schemas.User)
+def update_user_me(
+    *,
+    db: Session = Depends(depends.get_db),
+    password: str = Body(None),
+    email: EmailStr = Body(None),
+    current_user: models.Users = Depends(depends.get_current_user),
+) -> Any:
+    """
+    Update own user.
+    """
+    current_user_data = jsonable_encoder(current_user)
+    user_in = schemas.UserUpdate(**current_user_data)
+    if password is not None:
+        user_in.password = password
+    if email is not None:
+        user_in.email = email
+    user = crud.user.update(db, db_obj=current_user, obj_in=user_in)
+    return user
+
+
+@router.get("/me", response_model=schemas.User)
+def read_user_me(
+    current_user: models.Users = Depends(depends.get_current_user),
+) -> Any:
+    """
+    Get current user.
+    """
+    return current_user
+
+
+@router.get("/{user_id}", dependencies=[Depends(depends.verify_token)], response_model=schemas.User)
 async def read_user_by_id(
     user_id: int,
     db: Session = Depends(depends.get_db),
@@ -71,7 +101,7 @@ async def read_user_by_id(
     return user
 
 
-@router.put("/{user_id}",dependencies=[Depends(depends.verify_token)], response_model=schemas.User)
+@router.put("/{user_id}", dependencies=[Depends(depends.get_current_active_superuser)], response_model=schemas.User)
 async def update_user(
     *,
     db: Session = Depends(depends.get_db),
@@ -90,7 +120,8 @@ async def update_user(
     user = crud.user.update(db, db_obj=user, obj_in=user_in)
     return user
 
-@router.delete("/{user_id}",dependencies=[Depends(depends.verify_token)], response_model=schemas.User)
+
+@router.delete("/{user_id}", dependencies=[Depends(depends.get_current_active_superuser)], response_model=schemas.User)
 async def delete_user(
     *,
     db: Session = Depends(depends.get_db),
@@ -105,74 +136,9 @@ async def delete_user(
             status_code=404,
             detail="The user with this username does not exist in the system",
         )
-    user = crud.user.remove(db,id=user_id)
-    return user
-
-@router.get("/confirm_email/{confirmation_id}")
-async def confirm_email_by_link(
-    confirmation_id: str,
-    db: Session = Depends(depends.get_db),
-) -> Any:
-    """
-    Confirm the mail is correct or not and activate the account.
-    """
-    confirmation_email=users_utils.confirm_token(confirmation_id)
-    user = crud.user.get_by_email(db, email=confirmation_email)
-    if not user:
-        raise HTTPException(
-            status_code=400,
-            detail="The user with this email doesn't exists in the system.",
-        )
-    
-    user_in = {
-        "is_active": True
-    }
-    user = crud.user.update(db, db_obj=user, obj_in=user_in)
-    return user
-
-@router.post("/forget-password")
-async def forget_password(
-    background_tasks: BackgroundTasks,
-    user_in: schemas.UserEmail,
-    db: Session = Depends(depends.get_db),
-) -> Any:
-    """
-    Send link to email to reset password.
-    """
-    user = crud.user.get_by_email(db, email=user_in.email)
-    if not user:
-        raise HTTPException(
-            status_code=400,
-            detail="The user with this email does not exists in the system.",
-        )
-
-    background_tasks.add_task(users_utils.send_reset_password_email, user.email, user.handle)
-
-    return {"msg": "Password recovery email sent"}
-
-@router.post("/reset_password/{reset_id}")
-async def reset_password(
-    reset_id: str,
-    user_in:schemas.UserUpdate,
-    db: Session = Depends(depends.get_db),
-) -> Any:
-    """
-    Change the password of a user after verifiying mail.
-    """
-    reset_email=users_utils.confirm_token(reset_id)
-    user = crud.user.get_by_email(db, email=reset_email)
-    if not user:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid reset link",
-        )
-    
-    user_in = {
-        "password": user_in.password
-    }
-    user = crud.user.update(db, db_obj=user, obj_in=user_in)
+    user = crud.user.remove(db, id=user_id)
     return user
 
 
 def init_app(app):
-    app.include_router(router,prefix="/user")
+    app.include_router(router, prefix="/user")
