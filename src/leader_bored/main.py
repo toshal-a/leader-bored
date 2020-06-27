@@ -10,7 +10,7 @@ except ImportError:  # pragma: no cover
 logger = logging.getLogger(__name__)
 
 def get_app():
-    app = FastAPI(title="LeaderBored API",openapi_url=None)
+    app = FastAPI(title="LeaderBored API")
     load_modules(app)
     return app
 
