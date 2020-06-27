@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from leader_bored import crud, models, schemas
 from leader_bored.core import depends, settings
+from leader_bored.utils import users_utils
 
 router = APIRouter()
 
