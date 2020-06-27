@@ -28,12 +28,12 @@ def confirm_token(token, expiration=3600):
     return email
 
 def create_confirmation_url(hash:str):
-    link = "https://cp-leaderboard.me/user/confirm_email/"
+    link = "https://cp-leaderboard.me/confirm_email/"
     return link + hash
 
 
 def create_reset_password_url(hash:str):
-    link = "https://cp-leaderboard.me/user/reset_password/"
+    link = "https://cp-leaderboard.me/reset_password/"
     return link + hash
 
 

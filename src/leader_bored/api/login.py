@@ -78,7 +78,7 @@ async def forget_password(
     return {"msg": "Password recovery email sent"}
 
 
-@router.get("/reset_password/{reset_id}")
+@router.post("/reset_password/{reset_id}")
 async def reset_password(
     reset_id: str,
     user_in: schemas.UserUpdate,
