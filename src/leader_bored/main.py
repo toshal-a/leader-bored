@@ -1,5 +1,4 @@
 import logging
-
 import click
 from fastapi import FastAPI
 
@@ -11,7 +10,7 @@ except ImportError:  # pragma: no cover
 logger = logging.getLogger(__name__)
 
 def get_app():
-    app = FastAPI(title="LeaderBored API")
+    app = FastAPI(title="LeaderBored API",openapi_url=None)
     load_modules(app)
     return app
 

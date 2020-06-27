@@ -28,7 +28,7 @@ autopep8 = "^1.5.2"
 [tool.poetry.plugins."leader_bored.modules"]
 "contests"="leader_bored.api.contests"
 "user" = "leader_bored.api.user"
-"token" = "leader_bored.api.token"
+"login" = "leader_bored.api.login"
 
 [build-system]
 requires = ["poetry>=0.12"]
