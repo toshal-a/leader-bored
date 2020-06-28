@@ -52,8 +52,18 @@ async def create_user(
     if user:
         raise HTTPException(
             status_code=400,
-            detail="The user with this username already exists in the system.",
+            detail="A user with this email already exists.",
         )
+
+    user = crud.user.get_by_handle(db, handle=user_in.handle)
+    
+    if user:
+        raise HTTPException(
+            status_code=400,
+            detail="A user with given handle exists.",
+       )
+
+
     user = crud.user.create(db, obj_in=user_in)
     background_tasks.add_task(
         users_utils.send_new_account_email, user_in.email, user_in.handle)
@@ -116,7 +126,7 @@ async def update_user(
     if not user:
         raise HTTPException(
             status_code=404,
-            detail="The user with this username does not exist in the system",
+            detail="The user with this username does not exist in the system.",
         )
     user = crud.user.update(db, db_obj=user, obj_in=user_in)
     return user
