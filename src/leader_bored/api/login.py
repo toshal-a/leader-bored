@@ -56,6 +56,34 @@ async def confirm_email_by_link(
     return user
 
 
+@router.post("/resend_confirmation")
+async def resend_confirmation_email(
+    background_tasks: BackgroundTasks,
+    user_in: schemas.UserEmail,
+    db: Session = Depends(depends.get_db),
+) -> Any:
+    """
+    Resend link to email to activate account. 
+    """
+    user = crud.user.get_by_email(db, email=user_in.email)
+    if not user:
+        raise HTTPException(
+            status_code=400,
+            detail="The user with this email does not exists in the system.",
+        )
+
+    if user.is_active:
+        raise HTTPException(
+            status_code=400,
+            detail="The user account with this email is already active.",
+        )
+
+    background_tasks.add_task(
+        users_utils.send_new_account_email, user.email, user.handle)
+
+    return {"msg": "Confirmation email sent"}
+
+
 @router.post("/reset_password")
 async def forget_password(
     background_tasks: BackgroundTasks,
