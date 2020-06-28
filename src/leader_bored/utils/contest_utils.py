@@ -75,8 +75,13 @@ async def calculate_cf_score(response: dict, revert: bool = False):
 async def calculate_icpc_score(response: dict, revert: bool = False):
     new_scores = {}
     ratings = []
+    problemCount = 0
     for problem in response.get('problems', []):
-        ratings.append(problem.get('rating', 250) - 250)
+        problemCount += 1
+        if problem.get('rating', None):
+            ratings.append(problem.get('rating', 250) - 250)
+        else:
+            ratings.append(problemCount * 250)
     response = response.get('rows', [])
     for entry in response:
         userHandle = entry.get('party', {}).get('members', [{}])[0].get('handle', '')
