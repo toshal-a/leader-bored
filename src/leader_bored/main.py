@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_app():
-    app = FastAPI(title="LeaderBored API")
+    app = FastAPI(title="LeaderBored API",openapi_url=None)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
