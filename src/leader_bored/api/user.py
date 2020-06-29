@@ -73,7 +73,6 @@ async def create_user(
 def update_user_me(
     *,
     db: Session = Depends(depends.get_db),
-    email: EmailStr = Body(None),
     user_in: schemas.UserUpdate,
     current_user: models.Users = Depends(depends.get_current_user),
 ) -> Any:
