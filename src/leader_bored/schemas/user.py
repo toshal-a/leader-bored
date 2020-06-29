@@ -29,11 +29,12 @@ class UserUpdate(BaseModel):
     is_active: Optional[bool]=None
     password: Optional[str] = None
     score : Optional[int] = 0
+    class_type: Optional[ClassEnum] = 'Other'
 
 class UserEmail(BaseModel):
     email: EmailStr
 
-# Properties to return via API
+# Properties to return via API.
 class UserHandle(BaseModel):
     handle : List[str]
 
