@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Enum, Integer, String, DateTime
+from sqlalchemy import Boolean, Column, Enum, Integer, String, DateTime, Float
 from sqlalchemy.sql import func
 from leader_bored.db.base_class import Base
 
@@ -10,7 +10,9 @@ class Users(Base):
     class_type = Column(Enum('FE','SE','TE','BE','Other',name="class_types"),server_default='Other')
     handle = Column(String,unique=True,nullable=False)
     rank = Column(Integer,default=None)
-    overall_score = Column(Integer,default=0,nullable=False)
+    avg_percent = Column(Float, default=0, nullable=True)
+    aggr_percent = Column(Float, default=0, nullable=True)
+    contests_played = Column(Integer, default=0, nullable=True)
     is_active = Column(Boolean(), default=False,nullable=False)
     is_superuser = Column(Boolean(), default=False,nullable=False)
     created_at = Column(DateTime,server_default=func.now())
