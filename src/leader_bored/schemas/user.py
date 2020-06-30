@@ -28,7 +28,7 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     is_active: Optional[bool]=None
     password: Optional[str] = None
-    score : Optional[int] = 0
+    percent: Optional[float] = None
     class_type: Optional[ClassEnum] = 'Other'
 
 class UserEmail(BaseModel):
@@ -40,7 +40,9 @@ class UserHandle(BaseModel):
 
 class UserInDBBase(UserBase):
     id: Optional[int] = None
-    overall_score : Optional[int] = 0
+    avg_percent: Optional[float] = 0
+    aggr_percent: Optional[float] = 0 
+    contests_played: Optional[int] = 0
 
     class Config:
         orm_mode = True
