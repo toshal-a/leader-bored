@@ -47,7 +47,10 @@ class CRUDUser(CRUDBase[Users, UserCreate, UserUpdate]):
         if "percent" in update_data:
             if update_data["percent"] != 0:
                 update_data["aggr_percent"] = update_data["percent"] + getattr(db_obj,"aggr_percent", 0)
-                update_data["contests_played"] = 1 + getattr(db_obj, "contests_played", 0)
+                if update_data["percent"] < 0:
+                    update_data["contests_played"] =  getattr(db_obj, "contests_played", 0) - 1
+                else:
+                    update_data["contests_played"] = 1 + getattr(db_obj, "contests_played", 0)
                 update_data["avg_percent"] = update_data["aggr_percent"] / update_data["contests_played"] 
             del update_data["percent"]
         
