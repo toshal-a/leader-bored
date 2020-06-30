@@ -28,7 +28,7 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     is_active: Optional[bool]=None
     password: Optional[str] = None
-    score : Optional[int] = 0
+    percent: Optional[float] = None
     class_type: Optional[ClassEnum] = 'Other'
 
 class UserEmail(BaseModel):

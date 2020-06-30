@@ -44,9 +44,13 @@ class CRUDUser(CRUDBase[Users, UserCreate, UserUpdate]):
             hashed_password = get_password_hash(update_data["password"])
             del update_data["password"]
             update_data["hashed_password"] = hashed_password
-        if "score" in update_data:
-            update_data["overall_score"] = update_data["score"] + getattr(db_obj,"overall_score")
-            del update_data["score"]
+        if "percent" in update_data:
+            if update_data["percent"] != 0:
+                update_data["aggr_percent"] = update_data["percent"] + getattr(db_obj,"aggr_percent", 0)
+                update_data["contests_played"] = 1 + getattr(db_obj, "contests_played", 0)
+                update_data["avg_percent"] = update_data["aggr_percent"] / update_data["contests_played"] 
+            del update_data["percent"]
+        
         return super().update(db, db_obj=db_obj, obj_in=update_data)
 
     def authenticate(self, db: Session, *, email: str, password: str) -> Optional[Users]:

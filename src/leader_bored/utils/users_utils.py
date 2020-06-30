@@ -52,7 +52,6 @@ def render_template(template, **kwargs):
 
 
 def send_email(to, sender='CpLeaderbored<no-reply@cp-leaderboard.com>', password="",cc=None, bcc=None, subject=None, body=None):
-    print(body)
     ''' sends email using a Jinja HTML template '''
     # convert TO into list if string
     if type(to) is not list:
