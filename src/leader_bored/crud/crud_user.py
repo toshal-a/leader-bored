@@ -51,7 +51,10 @@ class CRUDUser(CRUDBase[Users, UserCreate, UserUpdate]):
                     update_data["contests_played"] =  getattr(db_obj, "contests_played", 0) - 1
                 else:
                     update_data["contests_played"] = 1 + getattr(db_obj, "contests_played", 0)
-                update_data["avg_percent"] = update_data["aggr_percent"] / update_data["contests_played"] 
+                if update_data["contests_played"] == 0:
+                    update_data["avg_percent"] = 0
+                else:
+                    update_data["avg_percent"] = update_data["aggr_percent"] / update_data["contests_played"] 
             del update_data["percent"]
         
         return super().update(db, db_obj=db_obj, obj_in=update_data)
