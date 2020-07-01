@@ -32,9 +32,41 @@ async def add_contest_score(
     if validation_msg.get('message', '') != 'Correct':
         return validation_msg
 
-    # Get Handles whose scores should be updated.
+    # Get Handles whose percentile should be updated.
     handles = await contest_utils.get_update_handles(db, revert, checkContest)
     
+    params = {
+        'contestId': contest_id,
+        'showUnofficial': 'false',
+    }
+    # Retrieve the information from cf api to calculate totalparticipants.
+    response = await contest_utils.get_cf_response(params)
+    if response.get( 'status', "") != 'OK':
+        setattr(exception_obj, 'status_code', status.HTTP_424_FAILED_DEPENDENCY)
+        setattr(
+            exception_obj,
+            'detail',
+            {
+                "message": "There is an error fetching data from cf for calculating total_participants please try again after some time.",
+                "api_response": response
+            }
+        )
+        raise exception_obj
+
+    totalParticipants = len(response["result"]["rows"])
+
+    if response.get('result', {}).get('contest', {}).get('phase', "") != 'FINISHED':
+        setattr(exception_obj, 'status_code', status.HTTP_405_METHOD_NOT_ALLOWED)
+        setattr(
+            exception_obj, 
+            'detail',
+            {
+                "message": "The contest is not yet over. Please try again after some time",
+                "contest_phase": response.get('contest', {}).get('phase', "")
+            }
+        )
+        raise exception_obj
+
     params = {
         'contestId': contest_id,
         'showUnofficial': 'false',
@@ -57,18 +89,6 @@ async def add_contest_score(
         raise exception_obj
 
     response = response.get('result', {})
-    # If the contest is not yet finished don't update the score.
-    if response.get('contest', {}).get('phase', "") != 'FINISHED':
-        setattr(exception_obj, 'status_code', status.HTTP_405_METHOD_NOT_ALLOWED)
-        setattr(
-            exception_obj, 
-            'detail',
-            {
-                "message": "The contest is not yet over. Please try again after some time",
-                "contest_phase": response.get('contest', {}).get('phase', "")
-            }
-        )
-        raise exception_obj
 
     # Information to be saved in contest table.
     contestType = response.get('contest', {}).get('type', "")
@@ -79,28 +99,14 @@ async def add_contest_score(
     if contestStartTime  != None:
         contestStartTime = datetime.utcfromtimestamp(contestStartTime).strftime('%Y-%m-%d %H:%M:%S') 
     
-    # Calculate score to be add for every individual according to contest type.
-    if contestType == 'CF' or contestType == 'IOI':
-        contestScores = await contest_utils.calculate_cf_score(response, revert)
-    elif contestType == 'ICPC':
-        contestScores = await contest_utils.calculate_icpc_score(response, revert)
-    else:
-        setattr(exception_obj, 'status_code', status.HTTP_400_BAD_REQUEST)
-        setattr(
-            exception_obj,
-            'detail',
-            {
-                "message": "This is a diffrent type of contest",
-                "contest_type": contestType
-            } 
-        )
-        raise exception_obj
+    # Calculate percentile for every individual according to contest type.
+    contestPercentile = await contest_utils.calculate_cf_percentile(response, revert, totalParticipants)
 
     # Background task which will update the database in the backend after sending the response.
-    background_tasks.add_task(contest_utils.update_databases, db, contestScores, checkContest, contestId,
+    background_tasks.add_task(contest_utils.update_databases, db, contestPercentile, checkContest, contestId,
             contestName, contestType, contestDurationSeconds, contestStartTime, revert)
 
-    return contestScores
+    return contestPercentile
 
 @router.get("/{contest_id}", dependencies=[Depends(depends.verify_token)], response_model= schemas.Contest)
 async def get_contest_info(contest_id: int, db: Session = Depends(depends.get_db)):

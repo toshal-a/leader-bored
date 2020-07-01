@@ -62,47 +62,18 @@ async def get_cf_response(params: dict)->dict:
         response = await client.get('https://codeforces.com/api/contest.standings', params=params)
     return response.json()
 
-
-async def calculate_cf_score(response: dict, revert: bool = False):
+async def calculate_cf_percentile(response: dict, revert: bool, totalParticipants: int):
     new_scores = {}
     response = response.get('rows', [])
     for entry in response:
         userHandle = entry.get('party', {}).get('members', [{}])[0].get('handle', '')
-        new_scores[userHandle] = pow(-1, revert) * entry.get('points', 0)
+        new_scores[userHandle] = pow(-1, revert) * round((1 - entry.get('rank', totalParticipants) / totalParticipants), 4)
     return new_scores
 
-
-async def calculate_icpc_score(response: dict, revert: bool = False):
-    new_scores = {}
-    ratings = []
-    problemCount = 0
-    for problem in response.get('problems', []):
-        problemCount += 1
-        if problem.get('rating', None):
-            ratings.append(problem.get('rating', 250) - 250)
-        else:
-            ratings.append(problemCount * 250)
-    response = response.get('rows', [])
-    for entry in response:
-        userHandle = entry.get('party', {}).get('members', [{}])[0].get('handle', '')
-        penalty = entry.get('penalty', 0)
-        score = 0
-        cnt = 0
-        for problem in entry.get('problemResults', []):
-            if problem.get("points", 0) == 1:
-                score += ratings[cnt]
-            cnt += 1
-        score -= penalty
-        score += (entry.get('successfulHackCount', 0) -
-                  entry.get('unsuccessfulHackCount', 0)) * 10
-
-        new_scores[userHandle] = pow(-1, revert) * score
-
-    return new_scores
 
 async def update_databases(
     db:Session, 
-    contestScores: dict,
+    contestPercentile: dict,
     checkContest: models.Contests,
     contestId: int,
     contestName: str,
@@ -111,9 +82,9 @@ async def update_databases(
     contestStartTime: Optional[datetime],
     revert: bool
 ):
-    for handle in contestScores:
+    for handle in contestPercentile:
         user = crud.user.get_by_handle(db, handle=handle)
-        user_in = {'score': contestScores.get(handle, 0)}
+        user_in = {'percent': contestPercentile.get(handle, 0)}
         crud.user.update(db, db_obj = user, obj_in = user_in)
 
     await modify_contest_db(checkContest, db,  contestId, contestName, contestType, 
