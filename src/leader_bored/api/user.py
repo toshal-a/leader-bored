@@ -25,7 +25,7 @@ async def read_users(
     return users
 
 
-@router.get("/", response_model=List[schemas.User])
+@router.get("/top", response_model=List[schemas.User])
 async def read_top_users(
     db: Session = Depends(depends.get_db),
     sortBy: str = None
