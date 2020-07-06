@@ -12,20 +12,33 @@ from leader_bored.utils import users_utils
 router = APIRouter()
 
 
-@router.get("/", response_model=List[schemas.User])
+@router.get("/", dependencies=[Depends(depends.verify_token)], response_model=List[schemas.User])
 async def read_users(
     db: Session = Depends(depends.get_db),
     skip: int = 0,
-    limit: int = 100,
-    sortBy: str = None
+    limit: int = 100
 ) -> Any:
     """
     Retrieve users.
     """
-    if sortBy is not None:
-       return crud.user.get_multi_sortBy(db,skip=skip,limit=10,sortBy=sortBy)
-    if depends.verify_token():
-        users = crud.user.get_multi(db, skip=skip, limit=limit)
+    users = crud.user.get_multi(db, skip=skip, limit=limit)
+    return users
+
+
+@router.get("/", response_model=List[schemas.User])
+async def read_top_users(
+    db: Session = Depends(depends.get_db),
+    sortBy: str = None
+) -> Any:
+    """
+    Retrieve top 10 users with sortBy param specified.
+    """
+    if sortBy is None:
+        raise HTTPException(
+            status_code=400,
+            detail="SortBy parameter is not specified",
+        )
+    users = crud.user.get_multi_sortBy(db, skip=0, limit=10, sortBy=sortBy)
     return users
 
 
@@ -60,18 +73,18 @@ async def create_user(
         )
 
     user = crud.user.get_by_handle(db, handle=user_in.handle)
-    
+
     if user:
         raise HTTPException(
             status_code=400,
             detail="A user with given handle exists.",
-       )
-
+        )
 
     user = crud.user.create(db, obj_in=user_in)
     background_tasks.add_task(
         users_utils.send_new_account_email, user_in.email, user_in.handle)
     return user
+
 
 @router.put("/me", response_model=schemas.User)
 def update_user_me(
