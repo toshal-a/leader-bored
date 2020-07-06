@@ -23,7 +23,7 @@ async def read_users(
     Retrieve users.
     """
     if sortBy is not None:
-       return crud.user.get_multi_sortBy(db,skip=skip,limit=limit,sortBy=sortBy)
+       return crud.user.get_multi_sortBy(db,skip=skip,limit=10,sortBy=sortBy)
     if depends.verify_token():
         users = crud.user.get_multi(db, skip=skip, limit=limit)
     return users

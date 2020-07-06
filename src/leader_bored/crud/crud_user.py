@@ -1,6 +1,7 @@
 from typing import Any, Dict, Optional, Union
 
 from sqlalchemy.orm import Session
+from sqlalchemy import desc
 
 from leader_bored.core.security import get_password_hash, verify_password
 from leader_bored.crud.base import CRUDBase
@@ -16,7 +17,7 @@ class CRUDUser(CRUDBase[Users, UserCreate, UserUpdate]):
         return db.query(Users).filter(Users.handle == handle).first()
 
     def get_multi_sortBy(self, db: Session, *, skip: int = 0, limit: int = 10, sortBy: str) -> Optional[Users]:
-        return db.query(Users).order_by(getattr(Users, sortBy, 'avg_percent')).offset(skip).limit(limit).all()
+        return db.query(Users).order_by(desc(getattr(Users, sortBy, 'avg_percent'))).offset(skip).limit(limit).all()
 
     def get_multi_handle(self, db: Session) -> Optional[Users]:
         return db.query(Users.handle).all()
