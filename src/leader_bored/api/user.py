@@ -18,7 +18,7 @@ async def read_users(
     isAuthenticated : Any = Depends(depends.verify_token),
     skip: int = 0,
     limit: int = 100,
-    sortBy: str = 'avg_percent'
+    sortBy: str = None
 ) -> Any:
     """
     Retrieve users.
