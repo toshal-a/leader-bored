@@ -15,7 +15,6 @@ router = APIRouter()
 @router.get("/", response_model=List[schemas.User])
 async def read_users(
     db: Session = Depends(depends.get_db),
-    isAuthenticated : Any = Depends(depends.verify_token),
     skip: int = 0,
     limit: int = 100,
     sortBy: str = None
@@ -25,7 +24,7 @@ async def read_users(
     """
     if sortBy is not None:
        return crud.user.get_multi_sortBy(db,skip=skip,limit=limit,sortBy=sortBy)
-    if isAuthenticated:
+    if depends.verify_token():
         users = crud.user.get_multi(db, skip=skip, limit=limit)
     return users
 
