@@ -12,9 +12,12 @@ class CRUDUser(CRUDBase[Users, UserCreate, UserUpdate]):
     def get_by_email(self, db: Session, *, email: str) -> Optional[Users]:
         return db.query(Users).filter(Users.email == email).first()
 
-    def get_by_handle(self, db: Session, *, handle:str)-> Optional[Users]:
-        return db.query(Users).filter(Users.handle == handle).first() 
-    
+    def get_by_handle(self, db: Session, *, handle: str) -> Optional[Users]:
+        return db.query(Users).filter(Users.handle == handle).first()
+
+    def get_multi_sortBy(self, db: Session, *, skip: int = 0, limit: int = 10, sortBy: str) -> Optional[Users]:
+        return db.query(Users).offset(skip).limit(limit).order_by(getattr(Users, sortBy, 'avg_percent')).all()
+
     def get_multi_handle(self, db: Session) -> Optional[Users]:
         return db.query(Users.handle).all()
 
@@ -46,17 +49,21 @@ class CRUDUser(CRUDBase[Users, UserCreate, UserUpdate]):
             update_data["hashed_password"] = hashed_password
         if "percent" in update_data:
             if update_data["percent"] != 0:
-                update_data["aggr_percent"] = update_data["percent"] + getattr(db_obj,"aggr_percent", 0)
+                update_data["aggr_percent"] = update_data["percent"] + \
+                    getattr(db_obj, "aggr_percent", 0)
                 if update_data["percent"] < 0:
-                    update_data["contests_played"] =  getattr(db_obj, "contests_played", 0) - 1
+                    update_data["contests_played"] = getattr(
+                        db_obj, "contests_played", 0) - 1
                 else:
-                    update_data["contests_played"] = 1 + getattr(db_obj, "contests_played", 0)
+                    update_data["contests_played"] = 1 + \
+                        getattr(db_obj, "contests_played", 0)
                 if update_data["contests_played"] == 0:
                     update_data["avg_percent"] = 0
                 else:
-                    update_data["avg_percent"] = update_data["aggr_percent"] / update_data["contests_played"] 
+                    update_data["avg_percent"] = update_data["aggr_percent"] / \
+                        update_data["contests_played"]
             del update_data["percent"]
-        
+
         return super().update(db, db_obj=db_obj, obj_in=update_data)
 
     def authenticate(self, db: Session, *, email: str, password: str) -> Optional[Users]:

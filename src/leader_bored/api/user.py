@@ -12,16 +12,21 @@ from leader_bored.utils import users_utils
 router = APIRouter()
 
 
-@router.get("/", dependencies=[Depends(depends.verify_token)], response_model=List[schemas.User])
+@router.get("/", response_model=List[schemas.User])
 async def read_users(
     db: Session = Depends(depends.get_db),
+    isAuthenticated : Any = Depends(depends.verify_token),
     skip: int = 0,
-    limit: int = 100
+    limit: int = 100,
+    sortBy: str = 'avg_percent'
 ) -> Any:
     """
     Retrieve users.
     """
-    users = crud.user.get_multi(db, skip=skip, limit=limit)
+    if sortBy is not None:
+       return crud.user.get_multi_sortBy(db,skip=skip,limit=limit,sortBy=sortBy)
+    if isAuthenticated:
+        users = crud.user.get_multi(db, skip=skip, limit=limit)
     return users
 
 
