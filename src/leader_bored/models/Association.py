@@ -5,12 +5,14 @@ from leader_bored.db.base_class import Base
 
 user_codechef = Table(
     "user_codechef", Base.metadata,
-    Column('user_id',Integer, ForeignKey('users.id')),
-    Column('codechef_id',String, ForeignKey('codechef.id'))
+    Column('user_id', Integer, ForeignKey('users.id')),
+    Column('codechef_id', String, ForeignKey('codechef.id')),
+    Column('percentile', Float, default=0.0)
 )
 
 user_codeforces = Table(
     "user_codeforces", Base.metadata,
-    Column('user_id',Integer, ForeignKey('users.id')),
-    Column('codeforces_id',Integer, ForeignKey('codeforces.id'))
+    Column('user_id', Integer, ForeignKey('users.id')),
+    Column('codeforces_id', Integer, ForeignKey('codeforces.id')),
+    Column('percentile', Float, default=0.0)
 )
