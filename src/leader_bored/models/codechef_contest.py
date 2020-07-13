@@ -14,4 +14,4 @@ class Codechef(Base):
     reverted_at = Column(DateTime, default=None, nullable = True)
     is_added = Column(Boolean, default=True, nullable=False)
     updated_at = Column(DateTime,server_default=func.now(),onupdate=func.now())
-    users = relationship("Users",secondary="user_codechef",back_populates="codechef_played")
+    users = relationship("UserCodechef",back_populates="contest")

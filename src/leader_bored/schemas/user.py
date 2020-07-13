@@ -43,6 +43,8 @@ class UserInDBBase(UserBase):
     avg_percent: Optional[float] = 0
     aggr_percent: Optional[float] = 0 
     contests_played: Optional[int] = 0
+    codechef_played: Optional[List] = []
+    codeforces_played: Optional[List] = []
 
     class Config:
         orm_mode = True

@@ -37,6 +37,11 @@ class CRUDUser(CRUDBase[Users, UserCreate, UserUpdate]):
         db.refresh(db_obj)
         return db_obj
 
+    def getattribute(self, db_obj: Users, attr: str, defaultValue):
+        return defaultValue if getattr(db_obj, attr, defaultValue) is None \
+            else getattr(db_obj, attr)
+        
+
     def update(
         self, db: Session, *, db_obj: Users, obj_in: Union[UserUpdate, Dict[str, Any]]
     ) -> Users:
@@ -50,19 +55,19 @@ class CRUDUser(CRUDBase[Users, UserCreate, UserUpdate]):
             update_data["hashed_password"] = hashed_password
         if "percent" in update_data:
             if update_data["percent"] != 0:
-                update_data["aggr_percent"] = update_data["percent"] + \
-                    getattr(db_obj, "aggr_percent", 0)
+                update_data["aggr_percent"] = round(update_data["percent"] + \
+                    self.getattribute(db_obj, "aggr_percent", 0), 4)
                 if update_data["percent"] < 0:
-                    update_data["contests_played"] = getattr(
+                    update_data["contests_played"] = self.getattribute(
                         db_obj, "contests_played", 0) - 1
                 else:
                     update_data["contests_played"] = 1 + \
-                        getattr(db_obj, "contests_played", 0)
+                        self.getattribute(db_obj, "contests_played", 0)
                 if update_data["contests_played"] == 0:
                     update_data["avg_percent"] = 0
                 else:
-                    update_data["avg_percent"] = update_data["aggr_percent"] / \
-                        update_data["contests_played"]
+                    update_data["avg_percent"] = round(update_data["aggr_percent"] / \
+                        update_data["contests_played"], 4)
             del update_data["percent"]
 
         return super().update(db, db_obj=db_obj, obj_in=update_data)
