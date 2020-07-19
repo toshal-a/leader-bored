@@ -45,7 +45,6 @@ class CodeforcesContestInDBBase(CodeforcesContestBase):
     is_added: bool
     added_at: Optional[datetime]
     reverted_at: Optional[datetime]
-    users: Optional[List] = []
     class Config:
         orm_mode = True
 
@@ -54,7 +53,11 @@ class CodeforcesContestInDBBase(CodeforcesContestBase):
 class CodeforcesContest(CodeforcesContestInDBBase):
     pass
 
+class CodeforcesContestUserInfo(BaseModel):
+    user_id: int
+    codeforces_handle: str
 
-# Additional properties stored in DB
+# Additional properties stored in DB.
 class CodeforcesContestInDB(CodeforcesContestInDBBase):
     updated_at: datetime
+    users: Optional[List] = []

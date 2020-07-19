@@ -139,5 +139,26 @@ async def delete_contest(contest_id: int, db: Session = Depends(depends.get_db))
     contest = crud.codeforces_contest.remove(db, id=contest_id)
     return contest
 
+@router.get(
+    "/users_participated/{contest_id}",
+    dependencies=[Depends(depends.verify_token)],
+    response_model=List[schemas.CodeforcesContestUserInfo]
+)
+async def read_participants_played(contest_id: int, db: Session = Depends(depends.get_db)):
+    """
+    Get the info of participated users in a particular contest.
+    """
+    contestInfo = crud.codeforces_contest.get(db, contest_id)
+    response = []
+
+    for entry in contestInfo.users:
+        userId = entry.user_id
+        userInfo = crud.user.get(db, userId)
+        response.append({
+            "user_id": userId,
+            "codeforces_handle": userInfo.handle
+        })
+    return response
+
 def init_app(app):
     app.include_router(router, prefix="/codeforces/contests")

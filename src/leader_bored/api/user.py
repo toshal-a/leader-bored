@@ -87,7 +87,7 @@ async def create_user(
 
 
 @router.put("/me", response_model=schemas.User)
-def update_user_me(
+async def update_user_me(
     *,
     db: Session = Depends(depends.get_db),
     user_in: schemas.UserUpdate,
@@ -101,13 +101,34 @@ def update_user_me(
 
 
 @router.get("/me", response_model=schemas.User)
-def read_user_me(
+async def read_user_me(
     current_user: models.Users = Depends(depends.get_current_user),
 ) -> Any:
     """
     Get current user.
     """
     return current_user
+
+@router.get("/me/codeforces_played", response_model=List[schemas.UserCodeforcesPlayed])
+async def read_user_codeforces_contests(
+    current_user: models.Users = Depends(depends.get_current_user),
+    db: Session = Depends(depends.get_db)
+):
+    """
+    Get information about all the contests played by logged in user.
+    """
+    codeforces_played = current_user.codeforces_played
+    response = []
+
+    for entry in codeforces_played: 
+        cfContestId = entry.codeforces_id
+        contest_detail = crud.codeforces_contest.get(db, cfContestId)
+        response.append({
+            "codeforces_id": cfContestId,
+            "contest_name": contest_detail.contest_name
+        })
+    
+    return response
 
 
 @router.get("/{user_id}", dependencies=[Depends(depends.verify_token)], response_model=schemas.User)
@@ -159,6 +180,7 @@ async def delete_user(
         )
     user = crud.user.remove(db, id=user_id)
     return user
+
 
 
 def init_app(app):

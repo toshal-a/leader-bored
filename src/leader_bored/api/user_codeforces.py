@@ -12,7 +12,7 @@ from leader_bored.utils import users_utils
 router = APIRouter()
 
 
-@router.get("/", dependencies=[Depends(depends.verify_token)], response_model=List[schemas.UserCodeforcesCreate])
+@router.get("/", dependencies=[Depends(depends.verify_token)], response_model=List[schemas.UserCodeforces])
 async def read_user_codeforces_relations(
     db: Session = Depends(depends.get_db),
     skip: int = 0,
