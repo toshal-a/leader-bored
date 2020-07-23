@@ -43,8 +43,6 @@ class UserInDBBase(UserBase):
     avg_percent: Optional[float] = 0
     aggr_percent: Optional[float] = 0 
     contests_played: Optional[int] = 0
-    codechef_played: Optional[List] = []
-    codeforces_played: Optional[List] = []
 
     class Config:
         orm_mode = True
@@ -54,7 +52,14 @@ class UserInDBBase(UserBase):
 class User(UserInDBBase):
     pass
 
+class UserCodeforcesPlayed(BaseModel):
+    codeforces_id: int
+    contest_name: str
+
 
 # Additional properties stored in DB
 class UserInDB(UserInDBBase):
     hashed_password: str
+    codechef_played: Optional[List] = []
+    codeforces_played: Optional[List] = []
+
