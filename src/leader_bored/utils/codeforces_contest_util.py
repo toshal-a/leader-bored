@@ -182,11 +182,10 @@ def send_leaderboard_update_email(
                         c2a_link=reset_link,
                         c2a_button="Checkout Leaderboard")
 
-        bcc = [str(user.email)]
-        to_list = ['tagrawal1339@gmail.com']
+        to_list = [str(user.email)]
         sender = settings.MAIL_SENDER_EMAIL 
         subject = f"{settings.PROJECT_NAME} - Details about your recent participation in " + str(contestName)
         password = settings.MAIL_SENDER_PASSWORD
 
         # send email to a list of email addresses.
-        emailSender.send_email(to_list, sender, password, None, bcc, subject, html)
+        emailSender.send_email(to_list, sender, password, None, None, subject, html)
