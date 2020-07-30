@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 
 from leader_bored.utils import codeforces_contest_util
-from leader_bored.core import depends
+from leader_bored.core import depends, settings
 from leader_bored import crud, schemas
 
 router = APIRouter()
@@ -15,6 +15,7 @@ async def add_contest_score(
     contest_id: int, 
     background_tasks: BackgroundTasks,
     revert: bool = 0, 
+    testing: bool = 0,
     db: Session = Depends(depends.get_db),
 ):
     exception_obj = HTTPException(
@@ -106,6 +107,10 @@ async def add_contest_score(
     # Background task which will update the database in the backend after sending the response.
     background_tasks.add_task(codeforces_contest_util.update_databases, db, contestPercentile, checkContest, contestId,
             contestPhase, contestName, contestType, contestDurationSeconds, contestStartTime, revert)
+
+    if revert == False and testing==False and settings.DB_DATABASE != 'testdb':
+        background_tasks.add_task(codeforces_contest_util.send_leaderboard_update_email, db, contestPercentile, contestName,
+                totalParticipants)
 
     return contestPercentile
 

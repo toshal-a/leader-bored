@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
 from leader_bored import crud, models
+from leader_bored.core import settings
+from leader_bored.email_server import emailSender
 
 async def validate_contest_addition(
     checkContest: models.Codeforces,
@@ -67,7 +69,10 @@ async def calculate_cf_percentile(response: dict, revert: bool, totalParticipant
     response = response.get('rows', [])
     for entry in response:
         userHandle = entry.get('party', {}).get('members', [{}])[0].get('handle', '')
-        new_scores[userHandle] = pow(-1, revert) * round((1 - entry.get('rank', totalParticipants) / totalParticipants), 4)
+        new_scores[userHandle] = {
+            'percentile': pow(-1, revert) * round((1 - entry.get('rank', totalParticipants) / totalParticipants), 4),
+            'rank': entry.get('rank', totalParticipants)
+        }
     return new_scores
 
 
@@ -88,14 +93,14 @@ async def update_databases(
 
     for handle in contestPercentile:
         user = crud.user.get_by_handle(db, handle=handle)
-        user_in = {'percent': contestPercentile.get(handle, 0)}
+        user_in = {'percent': contestPercentile.get(handle, {}).get('percentile', 0)}
         crud.user.update(db, db_obj = user, obj_in = user_in)
-        if contestPercentile.get(handle, 0) != 0: 
+        if contestPercentile.get(handle, {}).get('percentile', 0) != 0: 
             if revert == False:
                 relation_in = {
                     "user_id": user.id,
                     "codeforces_id": contestId,
-                    'percentile': contestPercentile.get(handle, 0) 
+                    'percentile': contestPercentile.get(handle, {}).get('percentile', 0) 
                 }
                 relation_obj = crud.user_codeforces.create(db, relation_in)
             else: 
@@ -154,3 +159,34 @@ async def modify_contest_db(
                     'added_at': datetime.utcnow()
                 })
             )
+
+def send_leaderboard_update_email(
+    db: Session,
+    contestPercentile:dict,
+    contestName: str,
+    totalParticipants: int
+):
+    reset_link = 'https://cp-leaderboard.me/app/leaderboard'
+
+    for handle in contestPercentile:
+        user = crud.user.get_by_handle(db, handle=handle)
+    
+        html = emailSender.render_template( settings.TEMPLATE_DIR + 'leaderboard_update.html', 
+                        header= "Leaderboard Updated!",
+                        handle= handle,
+                        contest_name=contestName,
+                        rank=contestPercentile.get(handle, {}).get('rank', totalParticipants),
+                        percentile=contestPercentile.get(handle, {}).get('percentile', 0),
+                        total_participants=totalParticipants,
+                        feedback_link='feedback@cp-leaderboard.me',
+                        c2a_link=reset_link,
+                        c2a_button="Checkout Leaderboard")
+
+        bcc = [str(user.email)]
+        to_list = ['tagrawal1339@gmail.com']
+        sender = settings.MAIL_SENDER_EMAIL 
+        subject = f"{settings.PROJECT_NAME} - Details about your recent participation in " + str(contestName)
+        password = settings.MAIL_SENDER_PASSWORD
+
+        # send email to a list of email addresses.
+        emailSender.send_email(to_list, sender, password, None, bcc, subject, html)
