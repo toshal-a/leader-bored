@@ -181,6 +181,17 @@ async def delete_user(
     user = crud.user.remove(db, id=user_id)
     return user
 
+@router.post("/feedback")
+async def send_feedback(
+    userName: str,
+    title: str,
+    feedback: str,
+) -> Any:
+    """
+    Post your feedback on the portal.
+    """
+    users_utils.send_feedback_mail(userName, title, feedback)
+    return {"status": 'OK'}
 
 
 def init_app(app):

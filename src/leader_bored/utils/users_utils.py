@@ -46,7 +46,6 @@ def send_new_account_email(email_to: str, username: str):
     # send email to a list of email addresses.
     emailSender.send_email(to_list, sender, password, None, None, subject, html)
 
-
 def send_reset_password_email(email_to: str, username: str):
     reset_id=generate_confirmation_token(email_to)
     reset_link=create_reset_password_url(reset_id)
@@ -64,3 +63,24 @@ def send_reset_password_email(email_to: str, username: str):
     
     # send email to a list of email addresses.
     emailSender.send_email(to_list, sender, password, None, None, subject, html)
+
+
+def send_feedback_mail(
+    userName: str, 
+    title: str, 
+    feedback: str
+):
+    html = emailSender.render_template( settings.TEMPLATE_DIR + 'feedback_form.html', 
+            	    header= f"Feedback from user - {userName}",
+                    text=feedback,
+                )
+    
+    to_list = ['feedback@cp-leaderboard.me']
+    sender = settings.MAIL_SENDER_EMAIL 
+    subject = f"Feedback - {title}"
+    password = settings.MAIL_SENDER_PASSWORD
+    
+    # send email to a list of email addresses.
+    emailSender.send_email(to_list, sender, password, None, None, subject, html)
+
+    
