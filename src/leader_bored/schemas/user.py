@@ -11,8 +11,6 @@ class ClassEnum(str,Enum):
 # Shared properties
 class UserBase(BaseModel):
     email: Optional[EmailStr] = None
-    is_active: Optional[bool] = False
-    is_superuser: bool = False
     full_name: Optional[str] = None
     handle : Optional[str] = None
     class_type: ClassEnum = ClassEnum.OTHER
@@ -59,6 +57,8 @@ class UserCodeforcesPlayed(BaseModel):
 
 # Additional properties stored in DB
 class UserInDB(UserInDBBase):
+    is_active: Optional[bool] = False
+    is_superuser: bool = False
     hashed_password: str
     codechef_played: Optional[List] = []
     codeforces_played: Optional[List] = []

@@ -24,6 +24,20 @@ async def read_users(
     users = crud.user.get_multi(db, skip=skip, limit=limit)
     return users
 
+@router.get("/month", dependencies=[Depends(depends.verify_token)], response_model=List[schemas.UserInfoCodeforcesMonth])
+async def read_users(
+    month: int,
+    year: int,
+    db: Session = Depends(depends.get_db),
+    skip: int = 0,
+    limit: int = 100
+) -> Any:
+    """
+    Retrieve users by month.
+    """
+    users = crud.user_codeforces_month.get_by_month(db, month, year)
+    return users
+
 
 @router.get("/top", response_model=List[schemas.User])
 async def read_top_users(
@@ -108,6 +122,16 @@ async def read_user_me(
     Get current user.
     """
     return current_user
+
+@router.get("/me/month_stats", response_model=List[schemas.UserCodeforcesMonth])
+async def read_user_month_stats(
+    current_user: models.Users = Depends(depends.get_current_user),
+    db: Session = Depends(depends.get_db)
+):
+    """
+    Get information about the monthly statistics of logged in user.
+    """
+    return current_user.month_stats
 
 @router.get("/me/codeforces_played", response_model=List[schemas.UserCodeforcesPlayed])
 async def read_user_codeforces_contests(

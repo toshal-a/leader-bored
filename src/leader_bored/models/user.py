@@ -20,3 +20,4 @@ class Users(Base):
     updated_at = Column(DateTime,server_default=func.now(),onupdate=func.now())
     codechef_played = relationship("UserCodechef",back_populates="user")
     codeforces_played = relationship("UserCodeforces",back_populates="user")
+    month_stats = relationship("UserCodeforcesMonth", back_populates="user")
