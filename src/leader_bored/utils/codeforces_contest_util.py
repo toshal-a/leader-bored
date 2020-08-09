@@ -91,10 +91,27 @@ async def update_databases(
     await modify_contest_db(checkContest, db,  contestId, contestPhase, contestName, contestType, 
             contestDurationSeconds, contestStartTime, revert)
 
+    contestStartTimeObj = datetime.strptime(contestStartTime, '%Y-%m-%d %H:%M:%S')
+    contestMonth = contestStartTimeObj.month
+    contestYear = contestStartTimeObj.year
+
     for handle in contestPercentile:
         user = crud.user.get_by_handle(db, handle=handle)
         user_in = {'percent': contestPercentile.get(handle, {}).get('percentile', 0)}
         crud.user.update(db, db_obj = user, obj_in = user_in)
+
+        # Update month wise statistics.
+        userMonthObj = crud.user_codeforces_month.get_by_primarykey(db, user.id, contestMonth, contestYear)
+        if userMonthObj == None:
+            user_month_in = {
+                "user_id": user.id,
+                "month": contestMonth,
+                "year": contestYear
+            }
+            userMonthObj = crud.user_codeforces_month.create(db, user_month_in)
+        user_month_in = {'percentile': contestPercentile.get(handle, {}).get('percentile', 0)}
+        crud.user_codeforces_month.update(db, userMonthObj, user_month_in)
+
         if contestPercentile.get(handle, {}).get('percentile', 0) != 0: 
             if revert == False:
                 relation_in = {
@@ -102,7 +119,7 @@ async def update_databases(
                     "codeforces_id": contestId,
                     'percentile': contestPercentile.get(handle, {}).get('percentile', 0) 
                 }
-                relation_obj = crud.user_codeforces.create(db, relation_in)
+                relationObj = crud.user_codeforces.create(db, relation_in)
             else: 
                 crud.user_codeforces.remove(db, user.id, contestId)
 
@@ -118,18 +135,6 @@ async def modify_contest_db(
     revert: bool
 ):
     if checkContest == None:
-        #crud.contest.create(
-        #    db, 
-        #    obj_in= dict({
-        #        'id': contestId,
-        #        'contest_name' : contestName,
-        #        'contest_type' : contestType,
-        #        'contest_status': contestPhase,
-        #        'duration_seconds': contestDurationSeconds,
-        #        'starting_at' : contestStartTime
-        #    })
-        #)
-
         crud.codeforces_contest.create(
             db,
             obj_in= dict({
@@ -171,21 +176,22 @@ def send_leaderboard_update_email(
     for handle in contestPercentile:
         user = crud.user.get_by_handle(db, handle=handle)
     
-        html = emailSender.render_template( settings.TEMPLATE_DIR + 'leaderboard_update.html', 
-                        header= "Leaderboard Updated!",
-                        handle= handle,
-                        contest_name=contestName,
-                        rank=contestPercentile.get(handle, {}).get('rank', totalParticipants),
-                        percentile=contestPercentile.get(handle, {}).get('percentile', 0),
-                        total_participants=totalParticipants,
-                        feedback_link='feedback@cp-leaderboard.me',
-                        c2a_link=reset_link,
-                        c2a_button="Checkout Leaderboard")
+        if contestPercentile.get(handle, {}).get('percentile', 0) != 0:
+            html = emailSender.render_template( settings.TEMPLATE_DIR + 'leaderboard_update.html', 
+                            header= "Leaderboard Updated!",
+                            handle= handle,
+                            contest_name=contestName,
+                            rank=contestPercentile.get(handle, {}).get('rank', totalParticipants),
+                            percentile=contestPercentile.get(handle, {}).get('percentile', 0),
+                            total_participants=totalParticipants,
+                            feedback_link='feedback@cp-leaderboard.me',
+                            c2a_link=reset_link,
+                            c2a_button="Checkout Leaderboard")
 
-        to_list = [str(user.email)]
-        sender = settings.MAIL_SENDER_EMAIL 
-        subject = f"{settings.PROJECT_NAME} - Details about your recent participation in " + str(contestName)
-        password = settings.MAIL_SENDER_PASSWORD
+            to_list = [str(user.email)]
+            sender = settings.MAIL_SENDER_EMAIL 
+            subject = f"{settings.PROJECT_NAME} - Details about your recent participation in " + str(contestName)
+            password = settings.MAIL_SENDER_PASSWORD
 
-        # send email to a list of email addresses.
-        emailSender.send_email(to_list, sender, password, None, None, subject, html)
+            # send email to a list of email addresses.
+            emailSender.send_email(to_list, sender, password, None, None, subject, html)

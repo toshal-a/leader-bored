@@ -13,5 +13,5 @@ class Codeforces(Base):
     added_at = Column(DateTime, server_default=func.now(), nullable= True)
     reverted_at = Column(DateTime, default=None, nullable = True)
     is_added = Column(Boolean, default=True, nullable=False)
-    updated_at = Column(DateTime,server_default=func.now(),onupdate=func.now())
-    users = relationship("UserCodeforces",back_populates="contest")
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    users = relationship("UserCodeforces", back_populates="contest")
