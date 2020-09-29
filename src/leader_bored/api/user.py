@@ -25,7 +25,7 @@ async def read_users(
     return users
 
 @router.get("/month", dependencies=[Depends(depends.verify_token)], response_model=List[schemas.UserInfoCodeforcesMonth])
-async def read_users(
+async def get_month_users(
     month: int,
     year: int,
     db: Session = Depends(depends.get_db),
@@ -149,7 +149,9 @@ async def read_user_codeforces_contests(
         contest_detail = crud.codeforces_contest.get(db, cfContestId)
         response.append({
             "codeforces_id": cfContestId,
-            "contest_name": contest_detail.contest_name
+            "contest_name": contest_detail.contest_name,
+            "contest_percentile": entry.percentile,
+            "contest_time":  contest_detail.starting_at
         })
     
     return response
@@ -207,14 +209,12 @@ async def delete_user(
 
 @router.post("/feedback")
 async def send_feedback(
-    userName: str,
-    title: str,
-    feedback: str,
+    feedback_details: schemas.UserFeedback
 ) -> Any:
     """
     Post your feedback on the portal.
     """
-    users_utils.send_feedback_mail(userName, title, feedback)
+    users_utils.send_feedback_mail(feedback_details.username, feedback_details.title, feedback_details.feedback)
     return {"status": 'OK'}
 
 

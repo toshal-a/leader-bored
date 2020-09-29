@@ -1,5 +1,6 @@
 from typing import Optional, List
 from enum import Enum
+from datetime import datetime
 from pydantic import BaseModel, EmailStr
 
 class ClassEnum(str,Enum):
@@ -32,6 +33,11 @@ class UserUpdate(BaseModel):
 class UserEmail(BaseModel):
     email: EmailStr
 
+class UserFeedback(BaseModel):
+    username: Optional[str]
+    title: str
+    feedback: str
+
 # Properties to return via API.
 class UserHandle(BaseModel):
     handle : List[str]
@@ -53,7 +59,8 @@ class User(UserInDBBase):
 class UserCodeforcesPlayed(BaseModel):
     codeforces_id: int
     contest_name: str
-
+    contest_percentile: float
+    contest_time: datetime
 
 # Additional properties stored in DB
 class UserInDB(UserInDBBase):

@@ -6,7 +6,6 @@ def generate_confirmation_token(email):
     serializer = URLSafeTimedSerializer(settings.SECRET_KEY)
     return serializer.dumps(email, salt=settings.SECURITY_PASSWORD_SALT)
 
-
 def confirm_token(token, expiration=3600):
     serializer = URLSafeTimedSerializer(settings.SECRET_KEY)
     try:
@@ -66,12 +65,12 @@ def send_reset_password_email(email_to: str, username: str):
 
 
 def send_feedback_mail(
-    userName: str, 
+    username: str, 
     title: str, 
     feedback: str
 ):
     html = emailSender.render_template( settings.TEMPLATE_DIR + 'feedback_form.html', 
-            	    header= f"Feedback from user - {userName}",
+            	    header= f"Feedback from user - {username}",
                     text=feedback,
                 )
     
